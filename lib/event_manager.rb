@@ -53,28 +53,6 @@ def save_thank_you_letter(id, form_letter)
   end
 end
 
-def most_sign_ups_per_hour(reg_by_hour)
-  most_sign_ups_per_hour = 0
-  reg_by_hour.each do |reg|
-    if reg > most_sign_ups_per_hour
-      most_sign_ups_per_hour = reg
-    end
-  end
-
-  most_sign_ups_per_hour
-end
-
-def most_popular_hours(reg_by_hour, most_sign_ups_per_hour)
-  most_popular_hours = Array.new
-  reg_by_hour.each_with_index do |reg, i|
-    if reg == most_sign_ups_per_hour
-      most_popular_hours.push(i)
-    end
-  end
-
-  most_popular_hours
-end
-
 puts 'Event Manager Initialized!'
 
 unless File.exist? "event_attendees.csv"
@@ -94,6 +72,7 @@ template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
 reg_by_hour = Array.new(23) {0}
+reg_by_wday = Array.new(7) {0}
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
@@ -105,13 +84,21 @@ contents.each do |row|
   save_thank_you_letter(id, form_letter)
 
   date, time = row[:regdate].split(' ')
+
   hour, minute = time.split(':')
   reg_by_hour[hour.to_i] += 1
+
+  weekday = Date.strptime(date, '%m/%d/%y').wday
+  reg_by_wday[weekday] += 1
 end
 
-most_sign_ups_per_hour = most_sign_ups_per_hour(reg_by_hour)
-most_popular_hours = most_popular_hours(reg_by_hour, most_sign_ups_per_hour)
+most_sign_ups_per_hour = reg_by_hour.max
+most_popular_hours = reg_by_hour.each_index.select { |i| reg_by_hour[i] == most_sign_ups_per_hour}
+
+most_sign_ups_per_day = reg_by_wday.max
+most_popular_days = reg_by_wday.each_index.select { |i| reg_by_wday[i] == most_sign_ups_per_day}
 
 p most_popular_hours
+p most_popular_days
 
 
